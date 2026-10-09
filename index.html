@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>بازار آثار — ورود به آزمون</title>
+<style>
+  :root { --ink:#1f2422; --muted:#55605c; --jade:#24584c; --bg:#f6f3f1; --card:#fbfaf8; --line:#cfd6d3; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-block-size:100dvh; display:grid; place-items:center; background:var(--bg); color:var(--ink);
+         font-family: Vazirmatn, Tahoma, "Segoe UI", sans-serif; line-height:1.9; padding:16px; }
+  main { max-inline-size:480px; inline-size:100%; background:var(--card); border:1px solid var(--line); border-radius:24px; padding:28px 24px; text-align:center; }
+  h1 { font-size:1.4rem; margin:0 0 8px; color:var(--jade); }
+  p { margin:8px 0; color:var(--muted); }
+  a.btn { display:inline-block; margin-block-start:16px; padding:12px 28px; border-radius:999px; background:var(--jade); color:#fff; text-decoration:none; font-weight:700; }
+  a.btn:focus-visible { outline:3px solid var(--ink); outline-offset:3px; }
+  [hidden] { display:none !important; }
+</style>
+</head>
+<body>
+<main>
+  <h1>بازار آثار</h1>
+  <p id="checking">در حال اتصال به نسخهٔ آزمایشی…</p>
+  <div id="ready" hidden>
+    <p>نسخهٔ آزمایشی در دسترس است. اگر خودکار منتقل نشدید، دکمه را بزنید.</p>
+    <a class="btn" id="go" href="#">ورود به بازار آثار</a>
+  </div>
+  <div id="offline" hidden>
+    <p><strong>الان نسخهٔ آزمایشی فعال نیست.</strong></p>
+    <p>آزمون در زمان‌های اعلام‌شده باز است. لطفاً در زمان جلسه دوباره همین لینک را باز کنید.</p>
+  </div>
+</main>
+<script>
+(async () => {
+  const show = (id) => { for (const s of ['checking', 'ready', 'offline']) document.getElementById(s).hidden = s !== id; };
+  try {
+    const cfg = await fetch('current.json?t=' + Date.now(), { cache: 'no-store' }).then((r) => r.json());
+    const base = String(cfg.url || '').replace(/\/+$/, '');
+    if (!/^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/.test(base)) return show('offline');
+    // Reachability: an opaque no-cors request resolves only if the tunnel answers.
+    const alive = await Promise.race([
+      fetch(base + '/health', { mode: 'no-cors', cache: 'no-store' }).then(() => true, () => false),
+      new Promise((r) => setTimeout(() => r(false), 8000)),
+    ]);
+    if (!alive) return show('offline');
+    const target = base + '/fa' + location.search;
+    document.getElementById('go').href = target;
+    show('ready');
+    location.replace(target);
+  } catch { show('offline'); }
+})();
+</script>
+</body>
+</html>
